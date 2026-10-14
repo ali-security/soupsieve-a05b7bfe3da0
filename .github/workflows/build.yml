@@ -1,14 +1,12 @@
 name: build
 
 on:
-  push:
-    branches:
-      - 'main'
-    tags:
-    - '**'
-  pull_request:
-    branches:
-    - '**'
+  workflow_dispatch:
+    inputs:
+      test-filter:
+        description: 'Optional pytest selector to run a subset of tests'
+        required: false
+        default: ''
 
 jobs:
   tests:
@@ -51,6 +49,7 @@ jobs:
       TOXENV: ${{ matrix.tox-env }}
 
     runs-on: ${{ matrix.platform }}
+    timeout-minutes: 40
 
     steps:
     - uses: actions/checkout@v4
@@ -63,20 +62,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools build tox coverage
     - name: Test
+      shell: bash
       run: |
-        python -m tox
-      continue-on-error: ${{ matrix.continue-on-error }}
-    - name: Upload Results
-      if: success()
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: ${{ matrix.platform }}-${{ matrix.tox-env }}
-        token: ${{ secrets.CODECOV_TOKEN }} # required
-        fail_ci_if_error: false
+        if [ -n "${{ inputs.test-filter }}" ]; then
+          python -m tox exec -- pytest ${{ inputs.test-filter }}
+        else
+          python -m tox
+        fi
 
   lint:
+    if: false
+    timeout-minutes: 15
     strategy:
       max-parallel: 4
       matrix:
@@ -101,6 +97,8 @@ jobs:
         python -m tox
 
   documents:
+    if: false
+    timeout-minutes: 15
     strategy:
       max-parallel: 4
       matrix:

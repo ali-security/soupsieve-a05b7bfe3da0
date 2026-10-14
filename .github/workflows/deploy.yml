@@ -1,13 +1,12 @@
 name: deploy
 
 on:
-  push:
-    tags:
-    - '*'
+  workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -16,18 +15,21 @@ jobs:
           python-version: 3.13
       - name: Build
         run: |
-          pip install --upgrade pip build
-          python -m build -s -w
+          pip install --upgrade pip build hatchling==1.29.0
+          python -m build -s -w --no-isolation
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
+          if-no-files-found: error
 
   pypi-publish:
+    if: false
     needs:
       - build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: pypi
     permissions:
       # IMPORTANT: this permission is mandatory for Trusted Publishing

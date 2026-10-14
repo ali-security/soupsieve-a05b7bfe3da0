@@ -1,14 +1,12 @@
 name: publish
 
 on:
-  push:
-    tags:
-    - '*'
   workflow_dispatch:
 
 jobs:
 
   documents:
+    timeout-minutes: 15
     strategy:
       max-parallel: 4
       matrix:
